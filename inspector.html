@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MCP Inspector 实战 · MCP 图解</title>
+<meta name="description" content="用官方 MCP Inspector 连接真实的 MCP 服务器，亲眼看到 initialize、tools/list、tools/call 等消息，并和 MCP 图解里的动画课程逐一对照。">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+:root{
+  --bg:#F5F3EF; --fg:#191615; --rgb:25,22,21; --green:#047857; --amber:#B45309; --red:#B42318;
+  --sans:system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root{--bg:#191615; --fg:#F5F3EF; --rgb:245,243,239; --green:#34D399; --amber:#FBBF24; --red:#F97066}}
+:root{--f70:rgba(var(--rgb),.70); --f55:rgba(var(--rgb),.62); --f30:rgba(var(--rgb),.30); --f15:rgba(var(--rgb),.15); --f08:rgba(var(--rgb),.07); --f04:rgba(var(--rgb),.035)}
+*{box-sizing:border-box}
+html{scroll-padding-top:72px}
+body{margin:0;background:var(--bg);color:var(--fg);font:15.5px/1.75 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-underline-offset:3px;text-decoration-color:var(--f30)}
+a:hover{text-decoration-color:var(--fg)}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--f15)}
+.bar{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:16px}
+.bar b{font-weight:500;font-size:17px}
+.bar a.back{margin-left:auto;font-size:14px;color:var(--f70);text-decoration:none;border:1px solid var(--f15);border-radius:8px;padding:5px 12px}
+.bar a.back:hover{background:var(--f08);color:var(--fg)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+nav.toc{position:sticky;top:72px;align-self:start;padding:40px 0;font-size:13.5px}
+nav.toc p{margin:0 0 8px;color:var(--f55);font-size:12px}
+nav.toc a{display:block;padding:4px 0;color:var(--f70);text-decoration:none}
+nav.toc a:hover{color:var(--fg)}
+main{padding:40px 0 80px;min-width:0}
+.kicker{margin:0 0 10px;font-size:13px;color:var(--f55)}
+h1{margin:0 0 16px;font-weight:400;font-size:44px;letter-spacing:-.02em;line-height:1.1}
+.lead{font-size:17px;color:var(--f70);margin:0 0 24px}
+h2{margin:56px 0 12px;font-weight:500;font-size:24px;letter-spacing:-.01em;padding-top:8px;border-top:1px solid var(--f15)}
+h3{margin:28px 0 8px;font-weight:500;font-size:17px}
+p,li{color:var(--f70)}
+strong{color:var(--fg);font-weight:500}
+code{font:13.5px var(--mono);background:var(--f08);padding:1px 6px;border-radius:5px;color:var(--fg)}
+.cmd{position:relative;margin:12px 0 16px}
+.cmd pre{margin:0;padding:14px 16px;padding-right:76px;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--f04);border:1px solid var(--f15);border-radius:10px;overflow-x:auto;font:13.5px/1.6 var(--mono);color:var(--fg)}
+.cmd pre .c{color:var(--f55)}
+.cmd button{position:absolute;top:8px;right:8px;font:12px var(--sans);color:var(--f70);background:var(--bg);border:1px solid var(--f15);border-radius:6px;padding:3px 10px;cursor:pointer}
+.cmd button:hover{color:var(--fg);background:var(--f08)}
+.out pre{background:transparent;border-style:dashed}
+.out::before{content:"输出示例";display:block;font-size:12px;color:var(--f55);margin-bottom:4px}
+.note{border-left:3px solid var(--f30);padding:8px 16px;margin:16px 0;background:var(--f04);border-radius:0 8px 8px 0}
+.note.warn{border-left-color:var(--amber)}
+.note.ok{border-left-color:var(--green)}
+.note p{margin:4px 0}
+.lesson{display:inline-flex;align-items:center;gap:4px;font-size:13px;padding:1px 10px;border:1px solid var(--f15);border-radius:999px;text-decoration:none;color:var(--fg);white-space:nowrap}
+.lesson:hover{background:var(--f08)}
+.lesson::after{content:"→";color:var(--f55)}
+.tbl{overflow-x:auto;margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+td code{overflow-wrap:anywhere}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--f15);vertical-align:top}
+th{font-weight:500;color:var(--fg);white-space:nowrap}
+td{color:var(--f70)}
+.modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.mode{border:1px solid var(--f15);border-radius:12px;padding:14px 16px}
+.mode b{display:block;font-weight:500;color:var(--fg)}
+.mode span{font-size:13.5px;color:var(--f70)}
+ol.steps{padding-left:20px}
+ol.steps li{margin:6px 0}
+footer{border-top:1px solid var(--f15);margin-top:56px;padding-top:16px;font-size:13px;color:var(--f55)}
+@media (max-width:820px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:0;padding:0 16px}
+  nav.toc{display:none}
+  .bar{padding:10px 16px}
+  h1{font-size:34px}
+  .modes{grid-template-columns:minmax(0,1fr)}
+  th,td{padding:8px 6px}
+}
+</style>
+</head>
+<body>
+<header><div class="bar"><b>MCP 图解</b><span style="color:var(--f55);font-size:14px">实战篇</span><a class="back" href="./">← 回到动画课程</a></div></header>
+<div class="wrap">
+<nav class="toc" aria-label="目录">
+  <p>目录</p>
+  <a href="#what">Inspector 是什么</a>
+  <a href="#prep">准备工作</a>
+  <a href="#web">实战一：网页版</a>
+  <a href="#cli">实战二：命令行</a>
+  <a href="#remote">实战三：远程服务器与 OAuth</a>
+  <a href="#map">对照表：消息 ↔ 课程</a>
+  <a href="#faq">常见问题</a>
+  <a href="#refs">参考与说明</a>
+</nav>
+<main>
+  <p class="kicker">动手实战 · MCP Inspector v2</p>
+  <h1>用 MCP Inspector 看真实的 MCP 消息</h1>
+  <p class="lead">动画课程里的每一条消息都是“示意”。这一篇带你用官方调试工具 <strong>MCP Inspector</strong> 连上一个真实的 MCP 服务器，亲手发出 <code>initialize</code>、<code>tools/list</code>、<code>tools/call</code>，再回到课程里对照着看，理解会扎实得多。</p>
+
+  <h2 id="what">Inspector 是什么</h2>
+  <p>MCP Inspector 是 MCP 官方维护的服务器调试工具（<a href="https://github.com/modelcontextprotocol/inspector" target="_blank" rel="noopener">GitHub 仓库</a>）。它扮演 <strong>MCP 客户端</strong>：连接你指定的服务器，把双方往来的每一条 JSON-RPC 消息都摆在你面前。同一个 npm 包 <code>@modelcontextprotocol/inspector</code> 提供三种用法：</p>
+  <div class="modes">
+    <div class="mode"><b>网页版（默认）</b><span>浏览器里点按钮：列工具、填参数、调用，并能看到每次调用的记录。最适合学习。</span></div>
+    <div class="mode"><b>命令行 <code>--cli</code></b><span>一条命令一个动作，输出 JSON，适合脚本、CI 和快速验证。</span></div>
+    <div class="mode"><b>终端界面 <code>--tui</code></b><span>在终端里交互浏览，不想开浏览器时用。</span></div>
+  </div>
+  <p>它<strong>不是网页服务</strong>，而是在你自己电脑上运行的 Node 程序，所以没法嵌进本站，需要你在本机跑。</p>
+
+  <h2 id="prep">准备工作</h2>
+  <ol class="steps">
+    <li><strong>安装 Node.js</strong>：Inspector v2 要求 Node <code>^22.23.4</code>、<code>^24.22.1</code> 或 <code>&gt;=26.12.1</code>；下面用来练习的示例服务器要求 <strong>Node 24 及以上</strong>。直接装 Node 24 或更新的 LTS 最省事。先确认版本：
+      <div class="cmd"><pre>node -v</pre><button type="button">复制</button></div></li>
+    <li><strong>不用提前安装 Inspector</strong>：下面都用 <code>npx</code> 临时运行，第一次会自动下载。</li>
+    <li><strong>练习用的服务器</strong>：官方的 <code>@modelcontextprotocol/server-everything</code>。它不干实事，专门把 MCP 的各种功能都演示一遍：工具（<code>echo</code>、<code>get-sum</code>……）、资源、提示词模板（<code>simple-prompt</code>）、进度通知、征询（elicitation）等，非常适合对照学习。</li>
+  </ol>
+  <div class="note warn">
+    <p><strong>安全提醒</strong>：Inspector 会在本机启动服务器进程，并把 OAuth 令牌等密钥存进系统钥匙串（没有钥匙串的环境会存到 <code>~/.mcp-inspector/secrets.json</code>，默认不加密）。只连接你信任的服务器；网页版默认只监听 <code>127.0.0.1</code>，不要改成对外开放。</p>
+  </div>
+
+  <h2 id="web">实战一：网页版（推荐先做）</h2>
+  <h3>1. 启动</h3>
+  <p>把“要连接的服务器启动命令”直接写在 Inspector 后面：</p>
+  <div class="cmd"><pre>npx @modelcontextprotocol/inspector npx @modelcontextprotocol/server-everything</pre><button type="button">复制</button></div>
+  <p>Inspector 会启动本地网页（地址会打印在终端里，默认端口 <code>6274</code>），并把 <code>npx @modelcontextprotocol/server-everything</code> 当作 <strong>stdio</strong> 服务器：作为子进程启动，通过标准输入输出、一行一条 JSON-RPC 消息来通信。<a class="lesson" href="./#transports">传输方式</a></p>
+  <div class="note"><p>网页带有访问令牌保护：请用终端打印出来的那个完整地址打开（可能带 <code>MCP_INSPECTOR_API_TOKEN</code> 参数），不要手动去掉。</p></div>
+
+  <h3>2. 连接：看握手</h3>
+  <p>在网页里连接服务器。连接这一步就是 MCP 的<strong>握手</strong>：客户端声明自己支持的协议版本和能力，服务器回复自己的版本、能力（有没有 tools、resources、prompts……）和身份。留意服务器返回的 <code>capabilities</code>，后面能用哪些功能全看它。<a class="lesson" href="./#lifecycle">生命周期</a></p>
+  <p>小知识：<code>server-everything</code> 同时支持两个“时代”的协议。2025 年的客户端用 <code>initialize</code> 握手；<code>2026-07-28</code> 版本取消了握手，改为每个请求都带上版本和能力（<code>server/discover</code>）。你看到的是哪一种，取决于 Inspector 和服务器协商的结果。在课程页面顶部切换规范版本，就能对比两种流程。</p>
+
+  <h3>3. 列出并调用工具</h3>
+  <ol class="steps">
+    <li>打开 <strong>Tools</strong> 页面，列出工具。这一步发出的就是 <code>tools/list</code>，返回每个工具的 <code>name</code>、<code>description</code> 和 <code>inputSchema</code>（JSON Schema）。<a class="lesson" href="./#tools">工具</a></li>
+    <li>选中 <code>echo</code>，在参数表单里填 <code>message</code>，比如“你好 MCP”，点击调用。这一步发出 <code>tools/call</code>，结果在 <code>content</code> 里返回。</li>
+    <li>再试 <code>get-sum</code>：填 <code>a</code> 和 <code>b</code> 两个数字。表单是按 <code>inputSchema</code> 自动生成的，这就是“模型读 schema 决定怎么传参”的同一份信息。</li>
+    <li>打开调用记录面板，看每次请求和响应的原始 JSON：<code>id</code> 如何一一对应、<code>result</code> 和 <code>error</code> 的区别，都能在这里看到。<a class="lesson" href="./#jsonrpc">JSON-RPC</a></li>
+  </ol>
+  <div class="note"><p>想看“工具调用失败”的样子：故意让参数不合法，比如 <code>get-sum</code> 少填一个数，看服务器返回的是 JSON-RPC <code>error</code>，还是带 <code>isError: true</code> 的结果。课程里讲过这两者的区别。</p></div>
+
+  <h3>4. 资源与提示词模板</h3>
+  <ul>
+    <li><strong>Resources</strong> 页面：列出资源（<code>resources/list</code>）和资源模板，读取一个资源（<code>resources/read</code>）。示例服务器带了 <code>demo://resource/collection/summer-specials</code> 这样的集合，一次读取会返回多段内容。<a class="lesson" href="./#resources">资源</a></li>
+    <li><strong>Prompts</strong> 页面：获取 <code>simple-prompt</code>（<code>prompts/get</code>），看服务器如何把模板展开成现成的消息。<a class="lesson" href="./#prompts">提示词模板</a></li>
+  </ul>
+
+  <h3>5. 进阶：进度与征询</h3>
+  <ul>
+    <li>调用 <code>trigger-long-running-operation</code>（填 <code>duration</code> 和 <code>steps</code>），观察执行过程中陆续到达的 <code>notifications/progress</code> 进度通知。<a class="lesson" href="./#progress">进度</a></li>
+    <li>调用 <code>trigger-elicitation-request</code>，服务器会反过来向“用户”要一张表单，Inspector 会弹出这张表单让你填。这就是征询（elicitation）。<a class="lesson" href="./#elicitation">征询</a></li>
+  </ul>
+
+  <h2 id="cli">实战二：命令行</h2>
+  <p>命令行模式下<strong>每条命令都必须带 <code>--method</code></strong>，执行完一个动作就退出，结果以 JSON 打印出来，很适合配合脚本使用。</p>
+  <h3>只握手，确认服务器活着</h3>
+  <div class="cmd"><pre>npx @modelcontextprotocol/inspector --cli npx @modelcontextprotocol/server-everything --method initialize</pre><button type="button">复制</button></div>
+  <p><code>--method initialize</code> 只完成握手：打印服务器的 <code>serverInfo</code>、<code>protocolVersion</code>、<code>capabilities</code>，然后断开，不调用任何东西。</p>
+  <h3>列出工具、调用工具</h3>
+  <div class="cmd"><pre><span class="c"># 列出所有工具</span>
+npx @modelcontextprotocol/inspector --cli npx @modelcontextprotocol/server-everything --method tools/list
+
+<span class="c"># 调用 echo，参数用 --tool-arg 键=值</span>
+npx @modelcontextprotocol/inspector --cli npx @modelcontextprotocol/server-everything --method tools/call --tool-name echo --tool-arg message=你好</pre><button type="button">复制</button></div>
+  <h3>资源和提示词模板</h3>
+  <div class="cmd"><pre>npx @modelcontextprotocol/inspector --cli npx @modelcontextprotocol/server-everything --method resources/list
+npx @modelcontextprotocol/inspector --cli npx @modelcontextprotocol/server-everything --method prompts/list</pre><button type="button">复制</button></div>
+  <div class="note">
+    <p><strong>参数顺序</strong>：Inspector 自己的参数（<code>--method</code>、<code>--tool-name</code>……）可以写在服务器命令前面或后面。如果服务器自己也有一个和 Inspector 同名的参数（比如 <code>--config</code>），要用 <code>--</code> 分隔，规则见<a href="https://github.com/modelcontextprotocol/inspector/blob/main/docs/mcp-server-configuration.md#the----separator" target="_blank" rel="noopener">官方说明</a>。</p>
+    <p><strong>放进 CI</strong>：固定版本号，并加 <code>--yes</code> 跳过首次安装确认，例如 <code>npx --yes @modelcontextprotocol/inspector@2.15.0 --cli …</code>。写 <code>@2</code> 不算固定，以后可能拉到更新的版本。</p>
+  </div>
+
+  <h2 id="remote">实战三：远程服务器与 OAuth</h2>
+  <p>远程服务器走 <strong>Streamable HTTP</strong>：一个网址，所有消息都 POST 过去。地址以 <code>/mcp</code> 结尾时，Inspector 会自动识别传输方式：</p>
+  <div class="cmd"><pre>npx @modelcontextprotocol/inspector --cli https://你的服务器/mcp --method tools/list</pre><button type="button">复制</button></div>
+  <p>官方提供了一个在线示例服务器 <code>https://example-server.modelcontextprotocol.io/mcp</code>，但它需要 <strong>OAuth 登录</strong>。不带令牌直接请求，会得到 <code>401</code>，这正是授权流程的第一步。你可以用 curl 亲眼看一下：</p>
+  <div class="cmd"><pre>curl -i -X POST https://example-server.modelcontextprotocol.io/mcp \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"curl","version":"0"}}}'</pre><button type="button">复制</button></div>
+  <div class="cmd out"><pre>HTTP/2 401
+www-authenticate: Bearer error="invalid_token", error_description="Missing Authorization header",
+  resource_metadata="https://example-server.modelcontextprotocol.io/.well-known/oauth-protected-resource"</pre></div>
+  <p><code>WWW-Authenticate</code> 里的 <code>resource_metadata</code> 告诉客户端去哪里找授权服务器。之后客户端会去发现授权服务器、用 PKCE 让用户登录、换取访问令牌，再带着令牌重新请求。这些步骤在网页版 Inspector 里会自动完成，建议用网页版连接这个地址，体验完整的登录流程。<a class="lesson" href="./#auth">授权</a></p>
+
+  <h2 id="map">对照表：你在 Inspector 里看到的 ↔ 本站课程</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>你在 Inspector 里做的事</th><th>线上的消息</th><th>对应课程</th></tr></thead>
+    <tbody>
+      <tr><td>连接服务器</td><td><code>initialize</code> / <code>notifications/initialized</code>（2026-07-28 起为 <code>server/discover</code>）</td><td><a class="lesson" href="./#lifecycle">生命周期</a></td></tr>
+      <tr><td>本地 / 远程两种连接方式</td><td>stdio 子进程 / Streamable HTTP</td><td><a class="lesson" href="./#transports">传输方式</a></td></tr>
+      <tr><td>看请求、响应、错误的原始 JSON</td><td>JSON-RPC 2.0 请求、响应、通知</td><td><a class="lesson" href="./#jsonrpc">JSON-RPC</a></td></tr>
+      <tr><td>列出、调用工具</td><td><code>tools/list</code>、<code>tools/call</code></td><td><a class="lesson" href="./#tools">工具</a></td></tr>
+      <tr><td>列出、读取资源</td><td><code>resources/list</code>、<code>resources/read</code></td><td><a class="lesson" href="./#resources">资源</a></td></tr>
+      <tr><td>获取提示词模板</td><td><code>prompts/list</code>、<code>prompts/get</code></td><td><a class="lesson" href="./#prompts">提示词模板</a></td></tr>
+      <tr><td>长任务的进度条</td><td><code>notifications/progress</code></td><td><a class="lesson" href="./#progress">进度</a></td></tr>
+      <tr><td>服务器弹出表单</td><td>征询（elicitation）</td><td><a class="lesson" href="./#elicitation">征询</a></td></tr>
+      <tr><td>远程服务器要求登录</td><td><code>401</code> + OAuth 2.1 / PKCE</td><td><a class="lesson" href="./#auth">授权</a></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="faq">常见问题</h2>
+  <h3>报 Node 版本不符合要求？</h3>
+  <p>按上面“准备工作”的要求升级 Node。用 nvm 的话：<code>nvm install 24</code>，然后 <code>nvm use 24</code>。</p>
+  <h3>网上的教程命令跑不通？</h3>
+  <p>很多旧文章写的是 Inspector <strong>v1</strong>。v2 改了退出码、参数顺序、<code>--</code> 分隔符，以及 <code>--config</code> 和 <code>--catalog</code> 的区分。以<a href="https://github.com/modelcontextprotocol/inspector/blob/main/docs/v1-to-v2-migration.md" target="_blank" rel="noopener">官方迁移指南</a>为准；确实需要旧版时可以用 <code>npx @modelcontextprotocol/inspector@v1-latest</code>。</p>
+  <h3>想连接自己写的服务器？</h3>
+  <p>把示例里的 <code>npx @modelcontextprotocol/server-everything</code> 换成你自己的启动命令，例如 <code>node build/index.js</code> 或 <code>uv run server.py</code>；远程服务器就换成它的网址。</p>
+  <h3>常用的服务器想每次都连？</h3>
+  <p>写一个 <code>mcp.json</code>（格式和 Claude Desktop 等客户端的配置一样，<code>mcpServers</code> 对象），然后用 <code>--config ./mcp.json --server 名字</code> 选择。详见<a href="https://github.com/modelcontextprotocol/inspector/blob/main/docs/mcp-server-configuration.md" target="_blank" rel="noopener">官方配置说明</a>。</p>
+
+  <h2 id="refs">参考与说明</h2>
+  <ul>
+    <li><a href="https://github.com/modelcontextprotocol/inspector" target="_blank" rel="noopener">MCP Inspector 仓库</a>（Apache-2.0，部分旧贡献为 MIT），以及其中的 <a href="https://github.com/modelcontextprotocol/inspector/blob/main/clients/cli/README.md" target="_blank" rel="noopener">CLI 文档</a>、<a href="https://github.com/modelcontextprotocol/inspector/blob/main/docs/cli-smoke-testing.md" target="_blank" rel="noopener">命令行冒烟测试指南</a></li>
+    <li><a href="https://github.com/modelcontextprotocol/servers/tree/main/src/everything" target="_blank" rel="noopener">server-everything 示例服务器</a>及其<a href="https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/features.md" target="_blank" rel="noopener">功能清单</a></li>
+    <li><a href="https://modelcontextprotocol.io/docs/2026-07-28/tools/inspector" target="_blank" rel="noopener">官方文档中的 Inspector 介绍</a></li>
+  </ul>
+  <div class="note ok"><p>本文依据 Inspector <strong>v2.15.0</strong> 与 server-everything <strong>v2.3.0</strong> 的官方文档整理（2026 年 11 月）。<code>401</code> 那段输出是实际请求得到的；其余命令以官方文档为准。界面细节可能随版本变化，以你本机看到的为准。</p></div>
+  <footer>MCP 图解 · 实战篇。动画课程源自 <a href="https://github.com/Runlayer/mcp-explained" target="_blank" rel="noopener">Runlayer/mcp-explained</a>，中文版与本实战篇为社区补充。</footer>
+</main>
+</div>
+<script>
+document.querySelectorAll(".cmd button").forEach((b) => b.addEventListener("click", async () => {
+  const text = b.previousElementSibling.innerText.split("\n").filter((l) => !l.trim().startsWith("#")).join("\n").replace(/\n{2,}/g, "\n").trim();
+  try { await navigator.clipboard.writeText(text); b.textContent = "已复制"; } catch (e) { b.textContent = "复制失败"; }
+  setTimeout(() => (b.textContent = "复制"), 1500);
+}));
+</script>
+</body>
+</html>
