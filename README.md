@@ -34,6 +34,8 @@ This fork adds a Simplified Chinese translation with an in-page language toggle 
 - `public/i18n.js`: `T()` lookup, `F()` templates, static-markup pass and the toggle. The renderer's `esc()` runs every displayed string through `T()`, so lesson data in `index.html` stays untouched and upstream changes merge cleanly.
 - After merging upstream, run `node tools/i18n-missing.js` to list new strings that need a translation, then add them to `zh.js`. Entries whose value equals the key mean "reviewed, keep in English".
 
+GitHub Pages：`sh tools/deploy-pages.sh` 会把 `public/` 推到 `gh-pages` 分支发布。
+
 中文翻译由社区完成，术语以 MCP 官方规范为准；发现翻译问题欢迎提 issue / PR。
 
 Made by [Runlayer](https://runlayer.com).
