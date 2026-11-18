@@ -133,22 +133,45 @@ Opening browser...</pre></div>
   <div class="note"><p>网页带有访问令牌保护：如果浏览器没有自动打开，就复制终端里那个带 <code>MCP_INSPECTOR_API_TOKEN</code> 参数的完整地址，不要手动去掉参数。令牌每次启动都会变，别分享给别人。用完在终端按 <code>Ctrl+C</code> 退出。</p></div>
 
   <h3>2. 连接：看握手</h3>
-  <p>在网页里连接服务器。连接这一步就是 MCP 的<strong>握手</strong>：客户端声明自己支持的协议版本和能力，服务器回复自己的版本、能力（有没有 tools、resources、prompts……）和身份。留意服务器返回的 <code>capabilities</code>，后面能用哪些功能全看它。<a class="lesson" href="./#lifecycle">生命周期</a></p>
+  <p>首页是 <strong>Servers</strong> 列表，里面有一张名为 <code>npx</code> 的服务器卡片，标着 <code>STDIO</code> 和 “Disconnected”。顶部那条灰色的 “Read-only session” 提示不用管：它只是说明这个服务器是在命令行里直接指定的，在网页上不能编辑。</p>
+  <p><strong>打开卡片右上角的开关</strong>，状态会变成绿色的 “Connected”，卡片上还会显示协商出的协议版本（实测是 <code>MCP 2025-11-25</code>）。同时右侧会展开监控侧栏，顶部导航出现 <strong>Servers / Tools / Prompts / Resources</strong> 四个标签页。</p>
+  <p>连接这一步就是 MCP 的<strong>握手</strong>：客户端声明自己支持的协议版本和能力，服务器回复自己的版本、能力（有没有 tools、resources、prompts……）和身份。留意服务器返回的 <code>capabilities</code>，后面能用哪些功能全看它；卡片上的 “Connection Info” 可以查看连接详情。<a class="lesson" href="./#lifecycle">生命周期</a></p>
+  <h3>看原始消息：右侧监控侧栏</h3>
+  <p>侧栏有 <strong>Logs / Protocol / Console</strong> 三个标签页。<strong>Protocol</strong> 就是“消息流”：每条 JSON-RPC 消息一张卡片，标着方向（<code>CLIENT → SERVER</code> 或 <code>SERVER → CLIENT</code>）、方法名、耗时和状态。点卡片右下角的展开按钮，可以看到完整的请求参数（Parameters）和响应（Response）。卡片上还有 Replay（原样重发）和 Edit and replay（改了再发）按钮。标题旁的 <code>LEGACY</code> 表示当前用的是 2025 年那一代协议。</p>
+  <p>刚连上时，你就会在 Protocol 里看到服务器<strong>主动</strong>发来的消息，比如 <code>roots/list</code> 请求（服务器问客户端“你开放了哪些目录”）和 <code>notifications/tools/list_changed</code> 通知。这说明 MCP 是双向的：服务器也能向客户端发请求。<a class="lesson" href="./#roots">根目录</a></p>
   <p>小知识：<code>server-everything</code> 同时支持两个“时代”的协议。2025 年的客户端用 <code>initialize</code> 握手；<code>2026-07-28</code> 版本取消了握手，改为每个请求都带上版本和能力（<code>server/discover</code>）。你看到的是哪一种，取决于 Inspector 和服务器协商的结果。在课程页面顶部切换规范版本，就能对比两种流程。</p>
 
   <h3>3. 列出并调用工具</h3>
   <ol class="steps">
-    <li>打开 <strong>Tools</strong> 页面，列出工具。这一步发出的就是 <code>tools/list</code>，返回每个工具的 <code>name</code>、<code>description</code> 和 <code>inputSchema</code>（JSON Schema）。<a class="lesson" href="./#tools">工具</a></li>
-    <li>选中 <code>echo</code>，在参数表单里填 <code>message</code>，比如“你好 MCP”，点击调用。这一步发出 <code>tools/call</code>，结果在 <code>content</code> 里返回。</li>
-    <li>再试 <code>get-sum</code>：填 <code>a</code> 和 <code>b</code> 两个数字。表单是按 <code>inputSchema</code> 自动生成的，这就是“模型读 schema 决定怎么传参”的同一份信息。</li>
-    <li>打开调用记录面板，看每次请求和响应的原始 JSON：<code>id</code> 如何一一对应、<code>result</code> 和 <code>error</code> 的区别，都能在这里看到。<a class="lesson" href="./#jsonrpc">JSON-RPC</a></li>
+    <li>点顶部的 <strong>Tools</strong>。左边会自动列出全部工具（实测 21 个），这背后就是 <code>tools/list</code>。每个工具显示标题和名字，比如 “Echo Tool” 下面的 <code>echo</code>。工具多时可以打开 “Paginated” 开关，体验分页加载（<code>nextCursor</code>）。<a class="lesson" href="./#tools">工具</a></li>
+    <li>选中 <strong>Echo Tool</strong>。详情里的 <code>READ-ONLY</code>、<code>IDEMPOTENT</code> 标签来自工具的 <code>annotations</code>；下面的表单是根据 <code>inputSchema</code> 自动生成的，<code>message *</code> 的星号表示必填。也可以打开 “Edit as JSON”，直接写参数 JSON。</li>
+    <li>在 <code>message</code> 里填“你好 MCP”，点 <strong>Execute Tool</strong>。右边 Results 显示 <code>Echo: 你好 MCP</code>；下方的 History 会记录每次运行，可以重跑（Re-run），也可以勾选两次运行做对比（Compare）。</li>
+    <li>回到右侧 Protocol，展开最上面那条 <code>tools/call</code>，看到的就是真正发出和收到的内容：</li>
   </ol>
+  <div class="cmd out"><pre><span class="c">Parameters（请求参数）</span>
+{
+  "name": "echo",
+  "arguments": { "message": "你好 MCP" },
+  "_meta": { "progressToken": 5 }
+}
+
+<span class="c">Response（响应）</span>
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "result": {
+    "content": [ { "type": "text", "text": "Echo: 你好 MCP" } ]
+  }
+}</pre></div>
+  <p>注意两点：Inspector 自动在请求里加了 <code>_meta.progressToken</code>，意思是“如果这个调用要很久，请用这个令牌给我发进度”；响应的 <code>id</code> 和请求一一对应，结果放在 <code>result.content</code> 里。<a class="lesson" href="./#jsonrpc">JSON-RPC</a></p>
+  <p>再试 <strong>Get Sum Tool</strong>（<code>get-sum</code>）：填 <code>a</code> 和 <code>b</code> 两个数字。表单读的就是模型决定怎么传参时看到的同一份 schema。</p>
   <div class="note"><p>想看“工具调用失败”的样子：故意让参数不合法，比如 <code>get-sum</code> 少填一个数，看服务器返回的是 JSON-RPC <code>error</code>，还是带 <code>isError: true</code> 的结果。课程里讲过这两者的区别。</p></div>
 
   <h3>4. 资源与提示词模板</h3>
   <ul>
-    <li><strong>Resources</strong> 页面：列出资源（<code>resources/list</code>）和资源模板，读取一个资源（<code>resources/read</code>）。示例服务器带了 <code>demo://resource/collection/summer-specials</code> 这样的集合，一次读取会返回多段内容。<a class="lesson" href="./#resources">资源</a></li>
-    <li><strong>Prompts</strong> 页面：获取 <code>simple-prompt</code>（<code>prompts/get</code>），看服务器如何把模板展开成现成的消息。<a class="lesson" href="./#prompts">提示词模板</a></li>
+    <li><strong>Resources</strong> 页面分三块：<strong>URIs</strong>（实测 8 个具体资源，<code>resources/list</code>）、<strong>Templates</strong>（4 个带参数的资源模板）、<strong>Subscriptions</strong>（订阅）。点一个资源就会读取并预览它（<code>resources/read</code>）。试试 “Summer Specials Collection”：一次读取会返回多段内容，每段都有自己的 URI。<a class="lesson" href="./#resources">资源</a></li>
+    <li><strong>Prompts</strong> 页面有 4 个模板：Simple Prompt（无参数）、Arguments Prompt（一个必填、一个可选参数）、Team Management、Resource Prompt（内嵌资源引用）。选一个获取，看服务器如何把模板展开成现成的消息（<code>prompts/get</code>）。<a class="lesson" href="./#prompts">提示词模板</a></li>
+    <li><strong>Team Management</strong> 演示的是参数<strong>自动补全</strong>：第一个参数选了什么，会缩小第二个参数的候选值。输入时 Inspector 会向服务器发 <code>completion/complete</code>。</li>
   </ul>
 
   <h3>5. 进阶：进度与征询</h3>
@@ -221,7 +244,7 @@ www-authenticate: Bearer error="invalid_token", error_description="Missing Autho
     <li><a href="https://github.com/modelcontextprotocol/servers/tree/main/src/everything" target="_blank" rel="noopener">server-everything 示例服务器</a>及其<a href="https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/features.md" target="_blank" rel="noopener">功能清单</a></li>
     <li><a href="https://modelcontextprotocol.io/docs/2026-07-28/tools/inspector" target="_blank" rel="noopener">官方文档中的 Inspector 介绍</a></li>
   </ul>
-  <div class="note ok"><p>本文依据 Inspector <strong>v2.15.0</strong> 与 server-everything <strong>v2.3.0</strong> 的官方文档整理（2026 年 11 月）。网页版启动命令和启动输出已在 macOS + Node 26 上实测；<code>401</code> 那段输出是实际请求得到的；其余命令以官方文档为准。界面细节可能随版本变化，以你本机看到的为准。</p></div>
+  <div class="note ok"><p>本文依据 Inspector <strong>v2.15.0</strong> 与 server-everything <strong>v2.3.0</strong> 的官方文档整理（2026 年 11 月）。网页版的启动、连接、Tools（含 echo 调用和 Protocol 原始消息）、Resources、Prompts 各步骤已在 macOS + Node 26 上实测；<code>401</code> 那段输出是实际请求得到的；其余命令以官方文档为准。界面细节可能随版本变化，以你本机看到的为准。</p></div>
   <footer>MCP 图解 · 实战篇。动画课程源自 <a href="https://github.com/Runlayer/mcp-explained" target="_blank" rel="noopener">Runlayer/mcp-explained</a>，中文版与本实战篇为社区补充。</footer>
 </main>
 </div>
