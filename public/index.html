@@ -7,8 +7,8 @@
 <meta name="description" content="An interactive guide to the Model Context Protocol: every JSON-RPC message on the wire, step by step. Transports, OAuth, tools, resources, sampling, elicitation, tasks, tool search and codemode.">
 <link rel="canonical" href="https://mcp-explained.com/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<script src="zh.js?v=7"></script>
-<script src="i18n.js?v=7"></script>
+<script src="zh.js?v=9"></script>
+<script src="i18n.js?v=9"></script>
 <meta name="theme-color" content="#191615">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="MCP Explained">
@@ -3375,7 +3375,7 @@ function renderAll(animate) {
 function renderTimeline() {
   $("#bv-name").textContent = T("Spec") + " " + st.version;
   $("#tm-cur").innerHTML = `${st.version}${st.version === "2026-07-28" ? " · " + T("latest") : st.version === SPEC ? " · " + T("default") : ""}`;
-  $("#tm-line").innerHTML = VERSIONS.map(([v, short]) => `<button type="button" data-ver="${v}" aria-pressed="${v === st.version}" title="MCP ${v}"><i></i><span>${short}</span></button>`).join("");
+  $("#tm-line").innerHTML = VERSIONS.map(([v, short]) => `<button type="button" data-ver="${v}" aria-pressed="${v === st.version}" title="MCP ${v}"><i></i><span>${esc(short)}</span></button>`).join("");
 }
 let riskPinned = null;
 function showRisk(btn, pin) {
