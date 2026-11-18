@@ -2821,6 +2821,8 @@ window.I18N_ZH = {
 "Runlayer does this in the gateway": "由 Runlayer 在网关里完成",
 "Everything below starts here: a person asks for something in plain language, and the app and model decide which tool can help.": "下面的一切都从这里开始：一个人用日常语言提出请求，应用和模型决定哪个工具能帮上忙。",
 "Switch to English": "Switch to English",
+"Try it hands-on": "动手练习",
+"mcpdiff.dev by Arcade: talk to a pretend server, validate messages": "Arcade 出品的 mcpdiff.dev（英文）：和模拟服务器对话、校验消息",
 "add to context": "加入上下文",
 "message": "消息",
 "send to model": "发给模型",
