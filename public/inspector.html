@@ -175,10 +175,19 @@ Opening browser...</pre></div>
   </ul>
 
   <h3>5. 进阶：进度与征询</h3>
-  <ul>
-    <li>调用 <code>trigger-long-running-operation</code>（填 <code>duration</code> 和 <code>steps</code>），观察执行过程中陆续到达的 <code>notifications/progress</code> 进度通知。<a class="lesson" href="./#progress">进度</a></li>
-    <li>调用 <code>trigger-elicitation-request</code>，服务器会反过来向“用户”要一张表单，Inspector 会弹出这张表单让你填。这就是征询（elicitation）。<a class="lesson" href="./#elicitation">征询</a></li>
-  </ul>
+  <h3>进度通知</h3>
+  <p>选中 <strong>Trigger Long Running Operation Tool</strong>（<code>trigger-long-running-operation</code>），表单默认 <code>duration</code> 为 10 秒、<code>steps</code> 为 5，直接点 Execute Tool。约 10 秒后返回 <code>Long running operation completed. Duration: 10 seconds, Steps: 5.</code>。这期间 Protocol 里每 2 秒多出一条 <code>SERVER → CLIENT</code> 的 <code>notifications/progress</code>，一共 5 条。展开其中一条：</p>
+  <div class="cmd out"><pre>{ "progress": 3, "total": 5, "progressToken": 6 }</pre></div>
+  <p>这里的 <code>progressToken</code> 就是 Inspector 在这次 <code>tools/call</code> 请求的 <code>_meta</code> 里自动带上的令牌，服务器靠它把进度对上正确的请求。前面 echo 调用里看到的 <code>_meta.progressToken</code>，用处就在这里。<a class="lesson" href="./#progress">进度</a></p>
+  <h3>征询：服务器反过来要用户填表</h3>
+  <p>选中 <strong>Trigger Elicitation Request Tool</strong>（<code>trigger-elicitation-request</code>，不需要参数），点 Execute Tool。会弹出一个 <strong>“Elicitation Request”</strong> 对话框：服务器要求填一张表单，字段类型很全，有必填字符串、布尔值、邮箱/网址/日期格式、整数、范围数字、单选和多选枚举。底部有安全警告“只提供你信任这个服务器的信息”，按钮是 <strong>Cancel / Decline / Submit</strong>。</p>
+  <p>这时看 Protocol：<code>tools/call</code> 标着 <code>PENDING</code>，同时多了一条 <code>SERVER → CLIENT</code> 的 <code>elicitation/create</code>，也是 <code>PENDING</code>。也就是说，<strong>工具调用会一直挂着，等用户回应</strong>。点 Decline 试试：</p>
+  <div class="cmd out"><pre><span class="c">elicitation/create 的响应</span>
+{ "action": "decline" }
+
+<span class="c">工具结果</span>
+❌ User declined to provide the requested information.</pre></div>
+  <p>挂起的 <code>tools/call</code> 随之完成，总耗时就是你犹豫的那段时间。三个按钮分别对应 <code>accept</code>（提交，附带填写的内容）、<code>decline</code>（明确拒绝）、<code>cancel</code>（不置可否地关掉）。规范要求服务器不得用表单索要密码、令牌这类机密，这里的警告就是客户端把关的一环。<a class="lesson" href="./#elicitation">征询</a> <a class="lesson" href="./#phishing">征询钓鱼</a></p>
 
   <h2 id="cli">实战二：命令行</h2>
   <p>命令行模式下<strong>每条命令都必须带 <code>--method</code></strong>，执行完一个动作就退出，结果以 JSON 打印出来，很适合配合脚本使用。</p>
@@ -244,7 +253,7 @@ www-authenticate: Bearer error="invalid_token", error_description="Missing Autho
     <li><a href="https://github.com/modelcontextprotocol/servers/tree/main/src/everything" target="_blank" rel="noopener">server-everything 示例服务器</a>及其<a href="https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/features.md" target="_blank" rel="noopener">功能清单</a></li>
     <li><a href="https://modelcontextprotocol.io/docs/2026-07-28/tools/inspector" target="_blank" rel="noopener">官方文档中的 Inspector 介绍</a></li>
   </ul>
-  <div class="note ok"><p>本文依据 Inspector <strong>v2.15.0</strong> 与 server-everything <strong>v2.3.0</strong> 的官方文档整理（2026 年 11 月）。网页版的启动、连接、Tools（含 echo 调用和 Protocol 原始消息）、Resources、Prompts 各步骤已在 macOS + Node 26 上实测；<code>401</code> 那段输出是实际请求得到的；其余命令以官方文档为准。界面细节可能随版本变化，以你本机看到的为准。</p></div>
+  <div class="note ok"><p>本文依据 Inspector <strong>v2.15.0</strong> 与 server-everything <strong>v2.3.0</strong> 的官方文档整理（2026 年 11 月）。网页版的启动、连接、Tools（含 echo 调用和 Protocol 原始消息）、Resources、Prompts、进度通知、征询各步骤已在 macOS + Node 26 上实测；<code>401</code> 那段输出是实际请求得到的；其余命令以官方文档为准。界面细节可能随版本变化，以你本机看到的为准。</p></div>
   <footer>MCP 图解 · 实战篇。动画课程源自 <a href="https://github.com/Runlayer/mcp-explained" target="_blank" rel="noopener">Runlayer/mcp-explained</a>，中文版与本实战篇为社区补充。</footer>
 </main>
 </div>
