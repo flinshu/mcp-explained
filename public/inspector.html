@@ -118,8 +118,19 @@ footer{border-top:1px solid var(--f15);margin-top:56px;padding-top:16px;font-siz
   <h3>1. 启动</h3>
   <p>把“要连接的服务器启动命令”直接写在 Inspector 后面：</p>
   <div class="cmd"><pre>npx @modelcontextprotocol/inspector npx @modelcontextprotocol/server-everything</pre><button type="button">复制</button></div>
-  <p>Inspector 会启动本地网页（地址会打印在终端里，默认端口 <code>6274</code>），并把 <code>npx @modelcontextprotocol/server-everything</code> 当作 <strong>stdio</strong> 服务器：作为子进程启动，通过标准输入输出、一行一条 JSON-RPC 消息来通信。<a class="lesson" href="./#transports">传输方式</a></p>
-  <div class="note"><p>网页带有访问令牌保护：请用终端打印出来的那个完整地址打开（可能带 <code>MCP_INSPECTOR_API_TOKEN</code> 参数），不要手动去掉。</p></div>
+  <p>第一次运行时 npx 会问 <code>Ok to proceed? (y)</code>，输入 <code>y</code> 回车。Inspector 带了网页前端，首次下载可能要几分钟，之后再运行就快了。启动成功后终端会打印：</p>
+  <div class="cmd out"><pre>Starting MCP inspector...
+
+MCP Inspector Web is up and running at:
+   http://127.0.0.1:6274?MCP_INSPECTOR_API_TOKEN=&lt;一串随机令牌&gt;
+
+   Sandbox (MCP Apps): http://127.0.0.1:6275/sandbox
+   Auth token: &lt;一串随机令牌&gt;
+   Secrets: OS keychain
+
+Opening browser...</pre></div>
+  <p>浏览器会自动打开这个地址。Inspector 启动了本地网页（默认端口 <code>6274</code>；<code>6275</code> 是渲染 MCP Apps 用的沙箱），并把 <code>npx @modelcontextprotocol/server-everything</code> 当作 <strong>stdio</strong> 服务器：作为子进程启动，通过标准输入输出、一行一条 JSON-RPC 消息来通信。<a class="lesson" href="./#transports">传输方式</a></p>
+  <div class="note"><p>网页带有访问令牌保护：如果浏览器没有自动打开，就复制终端里那个带 <code>MCP_INSPECTOR_API_TOKEN</code> 参数的完整地址，不要手动去掉参数。令牌每次启动都会变，别分享给别人。用完在终端按 <code>Ctrl+C</code> 退出。</p></div>
 
   <h3>2. 连接：看握手</h3>
   <p>在网页里连接服务器。连接这一步就是 MCP 的<strong>握手</strong>：客户端声明自己支持的协议版本和能力，服务器回复自己的版本、能力（有没有 tools、resources、prompts……）和身份。留意服务器返回的 <code>capabilities</code>，后面能用哪些功能全看它。<a class="lesson" href="./#lifecycle">生命周期</a></p>
@@ -210,7 +221,7 @@ www-authenticate: Bearer error="invalid_token", error_description="Missing Autho
     <li><a href="https://github.com/modelcontextprotocol/servers/tree/main/src/everything" target="_blank" rel="noopener">server-everything 示例服务器</a>及其<a href="https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/features.md" target="_blank" rel="noopener">功能清单</a></li>
     <li><a href="https://modelcontextprotocol.io/docs/2026-07-28/tools/inspector" target="_blank" rel="noopener">官方文档中的 Inspector 介绍</a></li>
   </ul>
-  <div class="note ok"><p>本文依据 Inspector <strong>v2.15.0</strong> 与 server-everything <strong>v2.3.0</strong> 的官方文档整理（2026 年 11 月）。<code>401</code> 那段输出是实际请求得到的；其余命令以官方文档为准。界面细节可能随版本变化，以你本机看到的为准。</p></div>
+  <div class="note ok"><p>本文依据 Inspector <strong>v2.15.0</strong> 与 server-everything <strong>v2.3.0</strong> 的官方文档整理（2026 年 11 月）。网页版启动命令和启动输出已在 macOS + Node 26 上实测；<code>401</code> 那段输出是实际请求得到的；其余命令以官方文档为准。界面细节可能随版本变化，以你本机看到的为准。</p></div>
   <footer>MCP 图解 · 实战篇。动画课程源自 <a href="https://github.com/Runlayer/mcp-explained" target="_blank" rel="noopener">Runlayer/mcp-explained</a>，中文版与本实战篇为社区补充。</footer>
 </main>
 </div>
