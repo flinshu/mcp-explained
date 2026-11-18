@@ -5,4 +5,6 @@ set -e
 git subtree split --prefix public -b gh-pages-tmp >/dev/null
 git push -f origin gh-pages-tmp:gh-pages
 git branch -D gh-pages-tmp >/dev/null
-echo "已发布：https://$(gh repo view --json owner,name -q '.owner.login + ".github.io/" + .name')/"
+# 从 origin 地址推出 Pages 网址（避免 gh 选到 upstream 仓库）
+slug=$(git remote get-url origin | sed -E 's#(\.git)?$##; s#.*github\.com[:/]##')
+echo "已发布：https://${slug%%/*}.github.io/${slug#*/}/（构建约 1 分钟）"
