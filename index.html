@@ -7,6 +7,8 @@
 <meta name="description" content="An interactive guide to the Model Context Protocol: every JSON-RPC message on the wire, step by step. Transports, OAuth, tools, resources, sampling, elicitation, tasks, tool search and codemode.">
 <link rel="canonical" href="https://mcp-explained.com/">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<script src="zh.js?v=3"></script>
+<script src="i18n.js?v=3"></script>
 <meta name="theme-color" content="#191615">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="MCP Explained">
@@ -473,6 +475,12 @@ tr.fut .risk{opacity:.5}
   .foot{padding:14px 16px 20px}
 }
 @media (prefers-reduced-motion:reduce){ *{transition:none!important;scroll-behavior:auto!important} }
+</style>
+<style>/* i18n */
+html.lang-zh{--sans:'Geist','Inter',system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;--mono:'Geist Mono',ui-monospace,"PingFang SC","Microsoft YaHei",monospace}
+.theme button.lang{width:auto;padding:0 8px;font:500 12px var(--sans)}
+html.lang-zh .zl{letter-spacing:.04em}
+html.lang-zh .ctrl button,html.lang-zh .views button,html.lang-zh #mb-log span{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -2588,9 +2596,12 @@ const GROUP_HEAD = { start: "Start here", core: "Core protocol", server: "Server
 const GROUP_LABEL = { core: "Core protocol", server: "Server feature", client: "Client feature", utility: "Utility", scale: "At scale" };
 </script>
 <script>(() => {
+const T = I18N.T, F = I18N.F, vlen = I18N.vlen; // i18n
+I18N.applyStatic(); I18N.addToggle();
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, attrs = {}, html) => { const e = document.createElement(tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; };
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const esc = (s) => escRaw(T(s)); // i18n: every displayed string passes through T()
+const escRaw = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const NS = "http://www.w3.org/2000/svg";
 const svgEl = (tag, attrs = {}) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
 
@@ -2705,7 +2716,7 @@ const MODELS = {
   },
 };
 // node geometry: model centre (ex, ey) for edges, label below, bbox for zones
-const textW = (s, px, mono) => String(s).length * px * (mono ? 0.6 : 0.52);
+const textW = (s, px, mono) => vlen(T(s)) * px * (mono ? 0.6 : 0.52);
 function layoutActor(a) {
   const kind = a.icon === "server" ? "server" : a.icon;
   const mdl = (MODELS[kind] || MODELS.server)(a);
@@ -2726,7 +2737,7 @@ const vIdx = (v) => VERSIONS.findIndex(([x]) => x === v);
 const atVersion = (l, ver) => {
   if (ver === SPEC) return l;
   const since = TM_SINCE[l.id];
-  if (since && vIdx(ver) < vIdx(since)) return Object.assign({}, l, { absent: since, variants: undefined, steps: [{ title: "Not in this version", desc: `${l.code} arrived in ${since}. Move the timeline forward to see it.`, msgs: [] }] });
+  if (since && vIdx(ver) < vIdx(since)) return Object.assign({}, l, { absent: since, variants: undefined, steps: [{ title: "Not in this version", desc: F("{0} arrived in {1}. Move the timeline forward to see it.", T(l.code), since), msgs: [] }] });
   const o = (TM[l.id] || {})[ver];
   return o ? Object.assign({}, l, o, { id: l.id, tmDiff: o.diff }) : Object.assign({}, l, { tmSame: true });
 };
@@ -3057,7 +3068,7 @@ function addPrompt(L) {
   const msgs = [{ from: "user", to: hub, kind: "host", dt: 0, info: `"${P.text}"`, json: { host: "message", text: P.text }, notes: [["prompt", "What the user typed. Everything after this follows from it."]] }];
   if (hasLlm) msgs.push({ from: hub, to: "llm", kind: "host", dt: 4, info: "prompt → model", json: { host: "send to model", text: P.text } });
   if (hasLlm && !hasUse) msgs.push({ from: "llm", to: hub, kind: "host", dt: 1100, info: "tool_use " + P.tool, json: { type: "tool_use", name: P.tool, input: P.args } });
-  if (!hasLlm) msgs[0].notes.push(["model", "Not drawn here: the model reads this and picks the " + P.tool + " tool."]);
+  if (!hasLlm) msgs[0].notes.push(["model", F("Not drawn here: the model reads this and picks the {0} tool.", P.tool)]);
   if (needCall && ids.includes("server")) msgs.push({ from: hub, to: "server", kind: "req", dt: 4, info: P.tool, json: rpc(6, "tools/call", { name: P.tool, arguments: P.args }) });
   const step = { title: "Prompt", desc: hasLlm ? "You ask for something. The app hands it to the model, which decides a tool can help." : "You ask for something. The model picks a tool and the client calls it.", msgs };
   return Object.assign({}, L, { steps: [...L.steps.slice(0, at), step, ...L.steps.slice(at)] });
@@ -3086,7 +3097,7 @@ function markRisks(msgs, L) {
   const where = { poisoning: ["tools", "search"], injection: ["tools", "resources", "codemode"], phishing: ["elicitation"], passthrough: ["auth"], shadowing: ["search"] };
   for (const m of msgs) { const k = riskOf(m, L); if (k && !seen.has(k) && where[k].includes(L.id)) { seen.add(k); m.risk = k; } }
 }
-const riskBtn = (k) => `<button type="button" class="risk" data-risk="${k}" aria-label="Attack surface: ${RISKS[k].title}" aria-haspopup="dialog"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.2 14.3 13.3H1.7z"/><path d="M8 6.6v3.1M8 11.6v.1"/></svg></button>`;
+const riskBtn = (k) => `<button type="button" class="risk" data-risk="${k}" aria-label="${esc(F("Attack surface: {0}", T(RISKS[k].title)))}" aria-haspopup="dialog"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.2 14.3 13.3H1.7z"/><path d="M8 6.6v3.1M8 11.6v.1"/></svg></button>`;
 const isNarrow = () => matchMedia("(max-width:640px)").matches;
 // On phones, columns become rows: the diagram reads top to bottom and fits the width.
 const portrait = (L) => {
@@ -3118,38 +3129,38 @@ function renderList() {
     let steps = "";
     if (open) steps = `<ol class="steps">${st.lesson.steps.map((x, i) => {
       const state = cur && cur.step === i ? "cur" : cur && cur.step > i ? "past" : "";
-      return `<li><button type="button" class="stp ${state}" data-step="${i}"><span class="num">${i + 1}</span><span><b>${esc(x.title)}${x.dep ? ` <i class="deptag">deprecated</i>` : ""}</b></span></button></li>`;
+      return `<li><button type="button" class="stp ${state}" data-step="${i}"><span class="num">${i + 1}</span><span><b>${esc(x.title)}${x.dep ? ` <i class="deptag">${T("deprecated")}</i>` : ""}</b></span></button></li>`;
     }).join("")}</ol>`;
-    html += `<div class="li ${open ? "open" : ""}${gone ? " gone" : ""}"><button type="button" class="lh" data-l="${l.id}" aria-expanded="${open}"><span class="lt"><b>${esc(l.code)}${(() => { const tg = l.id === "tasks" && vIdx(st.version) >= vIdx("2026-07-28") ? "extension" : l.tag; return tg ? ` <small>${tg}</small>` : ""; })()}${(() => { const d = depState(l); return d === "all" ? ' <i class="deptag">deprecated</i>' : ""; })()}</b><em>${gone ? "Arrives in " + since : esc(l.name)}</em></span></button>${steps}</div>`;
+    html += `<div class="li ${open ? "open" : ""}${gone ? " gone" : ""}"><button type="button" class="lh" data-l="${l.id}" aria-expanded="${open}"><span class="lt"><b>${esc(l.code)}${(() => { const tg = l.id === "tasks" && vIdx(st.version) >= vIdx("2026-07-28") ? "extension" : l.tag; return tg ? ` <small>${esc(tg)}</small>` : ""; })()}${(() => { const d = depState(l); return d === "all" ? ' <i class="deptag">' + T("deprecated") + '</i>' : ""; })()}</b><em>${gone ? F("Arrives in {0}", since) : esc(l.name)}</em></span></button>${steps}</div>`;
   }
-  html += `<div class="gh wn">What's next</div>` + WHATS_NEXT.map(([t, d, u]) => `<a class="wnl" href="${esc(u)}"${u.startsWith("#") ? "" : ' target="_blank" rel="noopener"'}><b>${esc(t)}${u.startsWith("#") ? " →" : " ↗"}</b><em>${esc(d)}</em></a>`).join("");
+  html += `<div class="gh wn">${T("What's next")}</div>` + WHATS_NEXT.map(([t, d, u]) => `<a class="wnl" href="${esc(u)}"${u.startsWith("#") ? "" : ' target="_blank" rel="noopener"'}><b>${esc(t)}${u.startsWith("#") ? " →" : " ↗"}</b><em>${esc(d)}</em></a>`).join("");
   $("#list").innerHTML = html;
-  if (!$("#left").classList.contains("expanded")) { $("#bl-name").textContent = st.lesson.code; $("#btn-lessons").setAttribute("aria-label", "Lessons. Current: " + st.lesson.code); }
+  if (!$("#left").classList.contains("expanded")) { $("#bl-name").textContent = T(st.lesson.code); $("#btn-lessons").setAttribute("aria-label", T("Lessons. Current: ") + T(st.lesson.code)); }
 }
 
 // ── overview + inspector
 function renderOverview() {
   const L = st.lesson;
-  $("#ov-title").textContent = L.code;
-  $("#ov-name").innerHTML = esc(L.name) + (DEPRECATED_IN[L.id] && vIdx(st.version) >= vIdx(DEPRECATED_IN[L.id]) ? ` <span class="deptag">Deprecated in ${DEPRECATED_IN[L.id]}</span>` : "");
-  $("#ov-sum").textContent = L.summary;
+  $("#ov-title").textContent = T(L.code);
+  $("#ov-name").innerHTML = esc(L.name) + (DEPRECATED_IN[L.id] && vIdx(st.version) >= vIdx(DEPRECATED_IN[L.id]) ? ` <span class="deptag">${F("Deprecated in {0}", DEPRECATED_IN[L.id])}</span>` : "");
+  $("#ov-sum").textContent = T(L.summary);
   $("#ov-ns").hidden = L.group !== "scale";
   const ext = (u, t) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>`;
   let more = "";
-  if (L.links) more += `<div class="srcs"><span class="lbl">${["start", "scale", "security", "next"].includes(L.group) ? "Read more" : "Spec"}</span><span class="lnk">${L.links.map(([t, u]) => ext(u, t + " ↗")).join("")}</span></div>`;
+  if (L.links) more += `<div class="srcs"><span class="lbl">${["start", "scale", "security", "next"].includes(L.group) ? T("Read more") : T("Spec")}</span><span class="lnk">${L.links.map(([t, u]) => ext(u, t + " ↗")).join("")}</span></div>`;
   if (st.version !== SPEC) {
-    const verLink = ext("https://modelcontextprotocol.io/specification/" + st.version + (st.version === "2024-11-05" ? "" : "/changelog"), (st.version === "2024-11-05" ? "Spec " : "Changelog ") + st.version + " ↗");
-    if (L.absent) more += `<div class="nextbox tmbox"><span class="nexttag">Not in ${st.version}</span><ul><li>${esc(L.code)} arrived in ${esc(L.absent)}.</li></ul></div>`;
-    else if (L.tmDiff) more += `<div class="nextbox tmbox"><span class="nexttag">In ${st.version}</span><ul>${L.tmDiff.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>${verLink}</div>`;
-    else if (!["start", "scale", "security", "next"].includes(L.group)) more += `<div class="nextbox tmbox"><span class="nexttag">In ${st.version}</span><ul><li>No changes to this lesson worth showing; the flow matches 2025-11-25.</li></ul>${verLink}</div>`;
+    const verLink = ext("https://modelcontextprotocol.io/specification/" + st.version + (st.version === "2024-11-05" ? "" : "/changelog"), (st.version === "2024-11-05" ? T("Spec") : T("Changelog")) + " " + st.version + " ↗");
+    if (L.absent) more += `<div class="nextbox tmbox"><span class="nexttag">${F("Not in {0}", st.version)}</span><ul><li>${F("{0} arrived in {1}.", esc(T(L.code)), esc(L.absent))}</li></ul></div>`;
+    else if (L.tmDiff) more += `<div class="nextbox tmbox"><span class="nexttag">${F("In {0}", st.version)}</span><ul>${L.tmDiff.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>${verLink}</div>`;
+    else if (!["start", "scale", "security", "next"].includes(L.group)) more += `<div class="nextbox tmbox"><span class="nexttag">${F("In {0}", st.version)}</span><ul><li>${T("No changes to this lesson worth showing; the flow matches 2025-11-25.")}</li></ul>${verLink}</div>`;
   }
-  if (L.next && st.version === SPEC) more += `<div class="nextbox"><span class="nexttag">What changes in ${NEXT}</span><ul>${L.next.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>${ext(NEXT_URL + "/changelog", "Changelog ↗")}</div>`;
-  if (L.wip) more += `<div class="wipbox"><span class="wiptag">In progress</span><ul>${L.wip.map(([t, st, u]) => `<li>${ext(u, t)} <em>${esc(st)}</em></li>`).join("")}</ul></div>`;
+  if (L.next && st.version === SPEC) more += `<div class="nextbox"><span class="nexttag">${F("What changes in {0}", NEXT)}</span><ul>${L.next.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>${ext(NEXT_URL + "/changelog", "Changelog ↗")}</div>`;
+  if (L.wip) more += `<div class="wipbox"><span class="wiptag">${T("In progress")}</span><ul>${L.wip.map(([t, st, u]) => `<li>${ext(u, t)} <em>${esc(st)}</em></li>`).join("")}</ul></div>`;
   $("#ov-more").innerHTML = more;
 }
 function hl(json) {
   const s = JSON.stringify(json, null, 2);
-  return esc(s).replace(/(&quot;(?:[^&]|&(?!quot;))*?&quot;)(\s*:)?|\b(true|false|null)\b|(-?\b\d+(?:\.\d+)?(?:e[+-]?\d+)?\b)/gi, (m, str, colon, lit, num) => {
+  return escRaw(s).replace(/(&quot;(?:[^&]|&(?!quot;))*?&quot;)(\s*:)?|\b(true|false|null)\b|(-?\b\d+(?:\.\d+)?(?:e[+-]?\d+)?\b)/gi, (m, str, colon, lit, num) => {
     if (str) return colon ? `<span class="k">${str}</span>${colon}` : `<span class="s">${str}</span>`;
     if (lit) return `<span class="l">${lit}</span>`;
     return `<span class="n">${num}</span>`;
@@ -3159,13 +3170,13 @@ function renderInspector() {
   const i = st.selected != null ? st.selected : st.idx;
   const m = MSGS[i];
   const box = $("#insp");
-  if (!m) { box.innerHTML = `<p class="empty">Press <b>Play</b> or <b>Step</b> to send the first message.</p>`; return; }
+  if (!m) { box.innerHTML = `<p class="empty">${T("Press <b>Play</b> or <b>Step</b> to send the first message.")}</p>`; return; }
   const from = actor(m.from), to = actor(m.to);
   const method = methodOf(m);
   box.innerHTML = `<div class="ih"><span class="dot k-${m.kind}"></span><span class="im">${esc(method)}</span><span class="isz">${size(m)}</span></div>
-    <div class="ir">${esc(from.label)} → ${esc(to.label)} · ${KIND[m.kind]} · #${i + 1}</div>
-    ${m.dep ? `<div class="depbox"><span class="deptag">Deprecated</span><p>${esc(m.dep)}</p></div>` : ""}<pre class="json">${hl(m.json)}</pre>
-    ${m.notes ? `<dl class="notes">${m.notes.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` : ""}${m.risk ? `<div class="riskline">${riskBtn(m.risk)}<p><b>Attack surface: ${esc(RISKS[m.risk].title)}.</b> ${esc(RISKS[m.risk].text)} <a href="#${m.risk}">See the attack →</a></p></div>` : ""}`;
+    <div class="ir">${esc(from.label)} → ${esc(to.label)} · ${T(KIND[m.kind])} · #${i + 1}</div>
+    ${m.dep ? `<div class="depbox"><span class="deptag">${T("Deprecated")}</span><p>${esc(m.dep)}</p></div>` : ""}<pre class="json">${hl(m.json)}</pre>
+    ${m.notes ? `<dl class="notes">${m.notes.map(([k, v]) => `<dt>${JSON.stringify(m.json || {}).includes(JSON.stringify(k)) ? escRaw(k) : esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` : ""}${m.risk ? `<div class="riskline">${riskBtn(m.risk)}<p><b>${F("Attack surface: {0}.", esc(T(RISKS[m.risk].title)))}</b> ${esc(RISKS[m.risk].text)} <a href="#${m.risk}">${T("See the attack →")}</a></p></div>` : ""}`;
 }
 
 // ── table
@@ -3176,7 +3187,7 @@ function renderTable() {
     t += m.dt || 0;
     const cls = [i === st.idx ? "cur" : "", i > st.idx ? "fut" : "", i === st.selected ? "sel" : "", m.dep ? "dep" : ""].join(" ");
     const method = methodOf(m);
-    return `<tr class="${cls}" data-i="${i}" tabindex="0"><td><span class="dot k-${m.kind}">${i + 1}</span></td><td>${esc(actor(m.from).label)}</td><td>${esc(actor(m.to).label)}</td><td class="mono">${m.dep ? `<s>${esc(method)}</s> <i class="deptag">deprecated</i>` : esc(method)}</td><td>${esc(m.info)}${m.risk ? " " + riskBtn(m.risk) : ""}</td></tr>`;
+    return `<tr class="${cls}" data-i="${i}" tabindex="0"><td><span class="dot k-${m.kind}">${i + 1}</span></td><td>${esc(actor(m.from).label)}</td><td>${esc(actor(m.to).label)}</td><td class="mono">${m.dep ? `<s>${esc(method)}</s> <i class="deptag">${T("deprecated")}</i>` : esc(method)}</td><td>${esc(m.info)}${m.risk ? " " + riskBtn(m.risk) : ""}</td></tr>`;
   }).join("");
   $("#tbody").innerHTML = rows;
   const cur = $("#tbody tr.cur");
@@ -3210,12 +3221,13 @@ function renderNetwork() {
   for (const z of L.zones || []) {
     const ms = z.ids.map(actor);
     let x0 = Math.min(...ms.map((m) => m.bx0)) - 22, x1 = Math.max(...ms.map((m) => m.bx1)) + 22;
-    const need = 48 + z.label.length * 8.9 + (z.sub ? z.sub.length * 7.6 + 10 : 0);
+    const zlab = T(z.label), zw = vlen(zlab) * 8.9;
+    const need = 48 + zw + (z.sub ? vlen(T(z.sub)) * 7.6 + 10 : 0);
     if (x1 - x0 < need) { const c = (x0 + x1) / 2; x0 = c - need / 2; x1 = c + need / 2; }
     const y0 = Math.min(...ms.map((m) => m.by0)) - 40, y1 = Math.max(...ms.map((m) => m.by1)) + 14;
     const g = svgEl("g", { class: "zone z-" + z.kind });
     g.innerHTML = `<rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" rx="16" class="zb"/>` +
-      `<text x="${x0 + 18}" y="${y0 + 24}" class="zl">${esc(z.label.toUpperCase())}</text>${z.sub ? `<text x="${x0 + 30 + z.label.length * 8.9}" y="${y0 + 24}" class="zsub">${esc(z.sub)}</text>` : ""}`;
+      `<text x="${x0 + 18}" y="${y0 + 24}" class="zl">${esc(zlab.toUpperCase())}</text>${z.sub ? `<text x="${x0 + 30 + zw}" y="${y0 + 24}" class="zsub">${esc(z.sub)}</text>` : ""}`;
     zg.appendChild(g);
   }
   svg.appendChild(zg);
@@ -3265,7 +3277,7 @@ function capHTML(L, i) {
   const s = L.steps[i];
   const rk = (MSGS.find((m) => m.step === i && m.risk) || {}).risk;
   const pw = plainFor(L, s.title);
-  return `<div class="ov">Step ${i + 1} of ${L.steps.length}${rk ? " " + riskBtn(rk) : ""}${s.dep ? ` <span class="deptag">Deprecated</span>` : ""}</div><div class="ct">${esc(s.title)}</div><p class="plain">${esc(pw || s.desc)}</p>${s.dep ? `<p class="depnote">${esc(s.dep)}</p>` : ""}`;
+  return `<div class="ov">${F("Step {0} of {1}", i + 1, L.steps.length)}${rk ? " " + riskBtn(rk) : ""}${s.dep ? ` <span class="deptag">${T("Deprecated")}</span>` : ""}</div><div class="ct">${esc(s.title)}</div><p class="plain">${esc(pw || s.desc)}</p>${s.dep ? `<p class="depnote">${esc(s.dep)}</p>` : ""}`;
 }
 let capKey = "";
 // Reserve the tallest caption of the lesson so the diagram never jumps between steps.
@@ -3294,8 +3306,8 @@ function animatePacket(m) {
   const [x1, y1, x2, y2] = edgePts(a, b);
   const label = methodOf(m);
   const g = svgEl("g", { class: "pkt k-" + m.kind + (m.dep ? " dep" : "") });
-  const w = Math.max(60, label.length * 8.1 + 30);
-  g.innerHTML = `<rect x="${-w / 2}" y="-14" width="${w}" height="28" rx="14" class="pb"/><circle cx="${-w / 2 + 14}" cy="0" r="4.5" class="pd"/><text x="${-w / 2 + 25}" y="4.5" class="pt">${esc(label)}</text>${m.dep ? `<text x="0" y="-21" text-anchor="middle" class="pdep">DEPRECATED</text>` : ""}`;
+  const w = Math.max(60, vlen(T(label)) * 8.1 + 30);
+  g.innerHTML = `<rect x="${-w / 2}" y="-14" width="${w}" height="28" rx="14" class="pb"/><circle cx="${-w / 2 + 14}" cy="0" r="4.5" class="pd"/><text x="${-w / 2 + 25}" y="4.5" class="pt">${esc(label)}</text>${m.dep ? `<text x="0" y="-21" text-anchor="middle" class="pdep">${T("DEPRECATED")}</text>` : ""}`;
   svg.appendChild(g);
   const trail = svgEl("line", { x1, y1, x2: x1, y2: y1, class: "trail k-" + m.kind, "marker-end": "url(#ah)" });
   svg.insertBefore(trail, g);
@@ -3333,7 +3345,7 @@ function renderSequence() {
     const vis = i <= st.idx, cur = i === st.idx;
     const label = m.kind === "req" || m.kind === "note" ? methodOf(m) : m.info;
     const dir = x2 > x1 ? 1 : -1;
-    h += `<g class="sm k-${m.kind} ${vis ? "" : "fut"} ${cur ? "cur" : ""} ${m.dep ? "dep" : ""}" data-i="${i}"><line x1="${x1 + dir * 4}" y1="${y}" x2="${x2 - dir * 4}" y2="${y}" marker-end="url(#sah)"/><text x="${(x1 + x2) / 2}" y="${y - 7}" text-anchor="middle">${m.dep ? `<tspan class="sdep">DEPRECATED </tspan>` : ""}${esc(label.length > 44 ? label.slice(0, 43) + "…" : label)}</text></g>`;
+    h += `<g class="sm k-${m.kind} ${vis ? "" : "fut"} ${cur ? "cur" : ""} ${m.dep ? "dep" : ""}" data-i="${i}"><line x1="${x1 + dir * 4}" y1="${y}" x2="${x2 - dir * 4}" y2="${y}" marker-end="url(#sah)"/><text x="${(x1 + x2) / 2}" y="${y - 7}" text-anchor="middle">${m.dep ? `<tspan class="sdep">${T("DEPRECATED")} </tspan>` : ""}${(() => { const t = String(T(label)); return esc(vlen(t) > 44 ? t.slice(0, Math.floor(43 * t.length / vlen(t))) + "…" : t); })()}</text></g>`;
   });
   svg.innerHTML = h;
   const curEl = svg.querySelector(".sm.cur");
@@ -3349,26 +3361,26 @@ function renderAll(animate) {
   if (st.view === "network") { renderNetwork(); if (animate && MSGS[st.idx]) animatePacket(MSGS[st.idx]); }
   else renderSequence();
   $("#btn-step").disabled = st.idx >= MSGS.length - 1;
-  $("#flowcount").textContent = `${MSGS.length} messages · ${st.lesson.steps.length} steps`;
+  $("#flowcount").textContent = F("{0} messages · {1} steps", MSGS.length, st.lesson.steps.length);
   const atEnd = st.idx >= MSGS.length - 1, li = LESSONS.findIndex((l) => l.id === st.lesson.id), nxt = LESSONS[(li + 1) % LESSONS.length];
   $("#mb-play").innerHTML = st.playing ? `<svg viewBox="0 0 24 24"><path d="M7 5h3v14H7zM14 5h3v14h-3z"/></svg>` : `<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>`;
-  $("#mb-play").setAttribute("aria-label", st.playing ? "Pause" : atEnd ? "Replay" : "Play");
+  $("#mb-play").setAttribute("aria-label", T(st.playing ? "Pause" : atEnd ? "Replay" : "Play"));
   $("#mb-prev").disabled = st.idx <= 0; $("#mb-next").disabled = atEnd;
   $("#mb-count").textContent = `${st.idx + 1}/${MSGS.length}`;
-  $("#mb-lname").textContent = nxt.code; $("#mb-lesson").setAttribute("aria-label", "Next lesson: " + nxt.code);
-  $("#btn-play").innerHTML = st.playing ? `<svg viewBox="0 0 24 24"><path d="M7 5h3v14H7zM14 5h3v14h-3z"/></svg>Pause` : `<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>${st.idx >= MSGS.length - 1 && st.idx >= 0 ? "Replay" : "Play"}`;
+  $("#mb-lname").textContent = T(nxt.code); $("#mb-lesson").setAttribute("aria-label", T("Next lesson: ") + T(nxt.code));
+  $("#btn-play").innerHTML = st.playing ? `<svg viewBox="0 0 24 24"><path d="M7 5h3v14H7zM14 5h3v14h-3z"/></svg>${T("Pause")}` : `<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>${st.idx >= MSGS.length - 1 && st.idx >= 0 ? T("Replay") : T("Play")}`;
 }
 
 function renderTimeline() {
-  $("#bv-name").textContent = "Spec " + st.version;
-  $("#tm-cur").innerHTML = `${st.version}${st.version === "2026-07-28" ? " · latest" : st.version === SPEC ? " · default" : ""}`;
+  $("#bv-name").textContent = T("Spec") + " " + st.version;
+  $("#tm-cur").innerHTML = `${st.version}${st.version === "2026-07-28" ? " · " + T("latest") : st.version === SPEC ? " · " + T("default") : ""}`;
   $("#tm-line").innerHTML = VERSIONS.map(([v, short]) => `<button type="button" data-ver="${v}" aria-pressed="${v === st.version}" title="MCP ${v}"><i></i><span>${short}</span></button>`).join("");
 }
 let riskPinned = null;
 function showRisk(btn, pin) {
   const k = btn.dataset.risk, pop = $("#riskpop");
   if (pin && riskPinned === btn) { hideRisk(); return; }
-  pop.innerHTML = `<b>${esc(RISKS[k].title)}</b><p>${esc(RISKS[k].text)}</p><a href="#${k}">See the attack →</a>`;
+  pop.innerHTML = `<b>${esc(RISKS[k].title)}</b><p>${esc(RISKS[k].text)}</p><a href="#${k}">${T("See the attack →")}</a>`;
   pop.hidden = false;
   const r = btn.getBoundingClientRect(), w = Math.min(300, innerWidth - 24);
   pop.style.width = w + "px";
@@ -3448,8 +3460,8 @@ document.addEventListener("click", (e) => {
     case "btn-prev": stop(); go(st.idx - 1, false); break;
     case "btn-reset": stop(); go(-1, false); break;
     case "btn-speed": st.speed = st.speed === 1 ? 2 : st.speed === 2 ? 0.5 : 1; renderAll(false); break;
-    case "btn-lessons": { const on = $("#left").classList.toggle("expanded"); $("#left").classList.remove("ver-open"); $("#btn-ver").setAttribute("aria-expanded", "false"); t.setAttribute("aria-expanded", on); $("#bl-name").textContent = on ? "Close" : st.lesson.code; break; }
-    case "btn-ver": { const on = $("#left").classList.toggle("ver-open"); t.setAttribute("aria-expanded", on); if ($("#left").classList.contains("expanded")) { $("#left").classList.remove("expanded"); $("#btn-lessons").setAttribute("aria-expanded", "false"); $("#bl-name").textContent = st.lesson.code; } break; }
+    case "btn-lessons": { const on = $("#left").classList.toggle("expanded"); $("#left").classList.remove("ver-open"); $("#btn-ver").setAttribute("aria-expanded", "false"); t.setAttribute("aria-expanded", on); $("#bl-name").textContent = on ? T("Close") : T(st.lesson.code); break; }
+    case "btn-ver": { const on = $("#left").classList.toggle("ver-open"); t.setAttribute("aria-expanded", on); if ($("#left").classList.contains("expanded")) { $("#left").classList.remove("expanded"); $("#btn-lessons").setAttribute("aria-expanded", "false"); $("#bl-name").textContent = T(st.lesson.code); } break; }
     case "btn-light": document.documentElement.dataset.theme = "light"; syncTheme(); break;
     case "btn-dark": document.documentElement.dataset.theme = "dark"; syncTheme(); break;
   }
