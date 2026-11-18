@@ -7,8 +7,8 @@
 <meta name="description" content="An interactive guide to the Model Context Protocol: every JSON-RPC message on the wire, step by step. Transports, OAuth, tools, resources, sampling, elicitation, tasks, tool search and codemode.">
 <link rel="canonical" href="https://mcp-explained.com/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<script src="zh.js?v=6"></script>
-<script src="i18n.js?v=6"></script>
+<script src="zh.js?v=7"></script>
+<script src="i18n.js?v=7"></script>
 <meta name="theme-color" content="#191615">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="MCP Explained">
@@ -3337,7 +3337,7 @@ function renderSequence() {
   const cx = {};
   L.actors.forEach((a, i) => {
     const x = colW * i + colW / 2; cx[a.id] = x;
-    h += `<line x1="${x}" y1="${top - 14}" x2="${x}" y2="${H - 10}" class="life"/><g transform="translate(${x - 70},14)"><rect width="140" height="38" rx="6" class="nb"/><text x="70" y="24" text-anchor="middle" class="nl">${esc(a.label)}</text>${zoneOf(a.id) ? `<text x="70" y="58" text-anchor="middle" class="zl sz-${zoneOf(a.id).kind}">${esc(zoneOf(a.id).label.toUpperCase())}</text>` : ""}</g>`;
+    h += `<line x1="${x}" y1="${top - 14}" x2="${x}" y2="${H - 10}" class="life"/><g transform="translate(${x - 70},14)"><rect width="140" height="38" rx="6" class="nb"/><text x="70" y="24" text-anchor="middle" class="nl">${esc(a.label)}</text>${zoneOf(a.id) ? `<text x="70" y="58" text-anchor="middle" class="zl sz-${zoneOf(a.id).kind}">${esc(T(zoneOf(a.id).label).toUpperCase())}</text>` : ""}</g>`;
   });
   let lastStep = -1;
   MSGS.forEach((m, i) => {
