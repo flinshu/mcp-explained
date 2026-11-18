@@ -1,5 +1,6 @@
 // 中文翻译词典。键是 index.html 里的英文原文（精确匹配），值是译文；显示时由 i18n.js 的 T() 查表。
-// 值与键相同表示“已审阅，保留英文”。上游更新后运行 `node tools/i18n-missing.js` 列出缺失条目，补进来即可。
+// 值与键相同表示“已审阅，保留英文”。上游更新后运行 `node tools/i18n-missing.js` 列出缺失条目，补进来即可；
+// 也可以打开 ?lang=zh&i18ndebug 点一遍页面，再看 I18N.misses。
 window.I18N_ZH = {
 "What is MCP?": "什么是 MCP？",
 "One definition, one diagram": "一个定义，一张图",
@@ -2839,5 +2840,8 @@ window.I18N_ZH = {
 "approval prompt": "批准提示",
 "approval saved": "已保存批准",
 "render": "渲染",
-"next turn": "下一轮"
+"next turn": "下一轮",
+"prompt": "提问",
+"extension": "扩展",
+"host": "宿主"
 };

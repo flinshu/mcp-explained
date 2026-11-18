@@ -20,8 +20,11 @@
     if (Object.prototype.hasOwnProperty.call(dict, s)) return dict[s];
     const m = s.match(/^(\s*)([\s\S]*?)(\s*(?: ?[↗→])?\s*)$/);
     if (m && m[2] && m[2] !== s && Object.prototype.hasOwnProperty.call(dict, m[2])) return m[1] + dict[m[2]] + m[3];
+    if (MISSES && /[A-Za-z]/.test(s) && !/^[\s\S]*[⺀-鿿]/.test(s)) MISSES.add(s);
     return s;
   };
+  // ?i18ndebug: collect strings T() could not translate in window.I18N.misses (for finding gaps).
+  const MISSES = new URLSearchParams(location.search).has("i18ndebug") ? new Set() : null;
   // Templates: F("Step {0} of {1}", 2, 5). The English template is the key.
   const F = (tpl, ...args) => String(T(tpl)).replace(/\{(\d)\}/g, (_, i) => (args[i] == null ? "" : args[i]));
   // Visual width in "Latin character" units: CJK and full-width glyphs count ~1.8.
@@ -56,5 +59,5 @@
     document.documentElement.classList.add("lang-zh");
     if (dict["MCP Explained · how the Model Context Protocol works"]) document.title = dict["MCP Explained · how the Model Context Protocol works"];
   }
-  window.I18N = { lang, supported: SUPPORTED, T, F, vlen, applyStatic, addToggle, setLang };
+  window.I18N = { lang, supported: SUPPORTED, T, F, vlen, applyStatic, addToggle, setLang, misses: MISSES };
 })();
