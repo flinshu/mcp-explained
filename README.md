@@ -28,7 +28,7 @@ npx wrangler deploy   # deploy
 
 ## 中文版 / Chinese
 
-This fork adds a Simplified Chinese translation with an in-page language toggle (top right). The language is picked from `?lang=zh|en`, then the last choice (localStorage), then the browser language.
+This fork adds a Simplified Chinese translation with an in-page language toggle (top right). The language is picked from `?lang=zh|en`, then the last choice (localStorage); the default is Chinese.
 
 - `public/zh.js`: exact-string dictionary, English source text → Chinese. Wire payloads (`json`) are never translated.
 - `public/i18n.js`: `T()` lookup, `F()` templates, static-markup pass and the toggle. The renderer's `esc()` runs every displayed string through `T()`, so lesson data in `index.html` stays untouched and upstream changes merge cleanly.

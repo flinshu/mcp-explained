@@ -8,7 +8,7 @@
     const q = norm(new URLSearchParams(location.search).get("lang"));
     if (q) return q;
     try { const s = norm(localStorage.getItem("mcpx-lang")); if (s) return s; } catch (e) {}
-    return norm(navigator.language) || "en";
+    return "zh"; // 中文版默认中文；?lang=en 或页面右上角按钮可切换英文
   };
   const lang = pick();
   const dict = DICTS[lang] || null;
