@@ -7,8 +7,8 @@
 <meta name="description" content="An interactive guide to the Model Context Protocol: every JSON-RPC message on the wire, step by step. Transports, OAuth, tools, resources, sampling, elicitation, tasks, tool search and codemode.">
 <link rel="canonical" href="https://mcp-explained.com/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<script src="zh.js?v=10"></script>
-<script src="i18n.js?v=10"></script>
+<script src="zh.js?v=11"></script>
+<script src="i18n.js?v=11"></script>
 <meta name="theme-color" content="#191615">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="MCP Explained">
@@ -2588,6 +2588,7 @@ const WHATS_NEXT = [
   ["Progressive disclosure", "Tool search and code mode, in the protocol", PD_WG],
   ["Registry", "registry.modelcontextprotocol.io, in preview", "https://modelcontextprotocol.io/registry/about"],
   ["Roadmap", "Next release planned for March 2027", ROADMAP],
+  ["Hands-on: MCP Inspector", "Connect to a real server and watch the messages (in Chinese)", "inspector.html"],
   ["Try it hands-on", "mcpdiff.dev by Arcade: talk to a pretend server, validate messages", "https://mcpdiff.dev/"],
 ];
 
@@ -3135,7 +3136,7 @@ function renderList() {
     }).join("")}</ol>`;
     html += `<div class="li ${open ? "open" : ""}${gone ? " gone" : ""}"><button type="button" class="lh" data-l="${l.id}" aria-expanded="${open}"><span class="lt"><b>${esc(l.code)}${(() => { const tg = l.id === "tasks" && vIdx(st.version) >= vIdx("2026-07-28") ? "extension" : l.tag; return tg ? ` <small>${esc(tg)}</small>` : ""; })()}${(() => { const d = depState(l); return d === "all" ? ' <i class="deptag">' + T("deprecated") + '</i>' : ""; })()}</b><em>${gone ? F("Arrives in {0}", since) : esc(l.name)}</em></span></button>${steps}</div>`;
   }
-  html += `<div class="gh wn">${T("What's next")}</div>` + WHATS_NEXT.map(([t, d, u]) => `<a class="wnl" href="${esc(u)}"${u.startsWith("#") ? "" : ' target="_blank" rel="noopener"'}><b>${esc(t)}${u.startsWith("#") ? " →" : " ↗"}</b><em>${esc(d)}</em></a>`).join("");
+  html += `<div class="gh wn">${T("What's next")}</div>` + WHATS_NEXT.map(([t, d, u]) => `<a class="wnl" href="${esc(u)}"${/^https?:/.test(u) ? ' target="_blank" rel="noopener"' : ""}><b>${esc(t)}${/^https?:/.test(u) ? " ↗" : " →"}</b><em>${esc(d)}</em></a>`).join("");
   $("#list").innerHTML = html;
   if (!$("#left").classList.contains("expanded")) { $("#bl-name").textContent = T(st.lesson.code); $("#btn-lessons").setAttribute("aria-label", T("Lessons. Current: ") + T(st.lesson.code)); }
 }
