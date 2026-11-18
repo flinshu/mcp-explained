@@ -41,7 +41,11 @@
 
   const setLang = (l) => {
     try { localStorage.setItem("mcpx-lang", l); } catch (e) {}
-    const u = new URL(location.href); u.searchParams.delete("lang"); location.href = u.toString();
+    // Drop ?lang= and reload. Assigning location.href to the same URL with a #hash would only
+    // scroll to the anchor (no reload), so replace the URL in place and reload explicitly.
+    const u = new URL(location.href); u.searchParams.delete("lang");
+    history.replaceState(history.state, "", u.toString());
+    location.reload();
   };
   const addToggle = () => {
     const box = document.querySelector("header .theme");
